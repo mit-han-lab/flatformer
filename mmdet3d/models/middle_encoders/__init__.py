@@ -1,3 +1,3 @@
-from .identity_middle_encoder import IdentityMiddleEncoder
+from .flatformer import FlatFormer
 
-__all__ = ['IdentityMiddleEncoder']
+__all__ = ['FlatFormer']

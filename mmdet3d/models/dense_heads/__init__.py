@@ -1,4 +1,4 @@
-from .centerpoint import CenterHead
+from .centerpoint_head import CenterHead
 
 
 __all__ = ['CenterHead']

@@ -1,4 +1,4 @@
-from .flatformer import FlatFormer
+from .second import SECOND
 
 
-__all__ = ['FlatFormer']
+__all__ = ['SECOND']

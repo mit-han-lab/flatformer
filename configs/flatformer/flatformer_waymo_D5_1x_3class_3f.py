@@ -30,10 +30,6 @@ model = dict(
     ),
 
     middle_encoder=dict(
-        type='IdentityMiddleEncoder'
-    ),
-
-    backbone=dict(
         type='FlatFormer',
         in_channels=128,
         num_heads=8,
@@ -45,13 +41,17 @@ model = dict(
         pos_temperature=10000,
         normalize_pos=False,
         group_size=144,
-        conv_in_channels=128,
-        conv_out_channels=[64, 128],
+    ),
+
+    backbone=dict(
+        type='SECOND',
+        in_channels=128,
+        out_channels=[64, 128],
         layer_nums=[3, 3],
         layer_strides=[1, 2],
-        conv_shortcut=True,
         conv_cfg=dict(type='Conv2d', bias=False),
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01)
+        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
+        residual=True,
     ),
 
     neck=dict(

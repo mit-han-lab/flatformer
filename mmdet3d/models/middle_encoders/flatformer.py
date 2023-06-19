@@ -1,5 +1,4 @@
 import math
-#from functools import cached_property, lru_cache
 from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
@@ -7,14 +6,13 @@ import torch
 import torch.nn as nn
 from flash_attn.flash_attn_interface import flash_attn_unpadded_qkvpacked_func
 from mmcv.runner import auto_fp16
-from mmcv.cnn import build_conv_layer, build_norm_layer
-from mmdet.models import BACKBONES
 from torch.nn import functional as F
+
+from ..builder import MIDDLE_ENCODERS
 
 __all__ = ["FlatFormer"]
 
 
-#@lru_cache
 def _create_cu_seqlens(batch_size: int, num_tokens: int, device: torch.device) -> torch.Tensor:
     return torch.arange(
         0,
@@ -97,8 +95,6 @@ class BasicLayer(nn.Module):
     def forward(self, src, pe):
         src = self.norm1(src + self.attn(src, pe))
         src = self.norm2(src + self.fc2(self.act(self.fc1(src))))
-        #src = src + self.attn(self.norm1(src), pe)
-        #src = src + self.fc2(self.act(self.fc1(self.norm2(src))))
 
         return src
 
@@ -275,7 +271,6 @@ class PositionalEmbedding(nn.Module):
 
         return pe
 
-    #@cached_property
     def inv_freq(self):
         ndim = 2
         pos_length = (self.feat_dim // (ndim * 2)) * 2
@@ -286,7 +281,7 @@ class PositionalEmbedding(nn.Module):
         return inv_freq
 
 
-@BACKBONES.register_module()
+@MIDDLE_ENCODERS.register_module()
 class FlatFormer(nn.Module):
     def __init__(
         self,
@@ -300,13 +295,6 @@ class FlatFormer(nn.Module):
         pos_temperature=10000,
         normalize_pos=False,
         group_size=69,
-        conv_in_channels=None,
-        conv_out_channels=None,
-        layer_nums=[3, 5, 5],
-        layer_strides=[2, 2, 2],
-        conv_shortcut=False,
-        conv_cfg=dict(type='Conv2d', bias=False),
-        norm_cfg=dict(type='naiveSyncBN2d', eps=1e-3, momentum=0.01),
     ) -> None:
         super().__init__()
         self.group_size = group_size
@@ -326,51 +314,8 @@ class FlatFormer(nn.Module):
 
         self.output_shape = output_shape
 
-        self.conv_shortcut = conv_shortcut
-
-        assert len(layer_strides) == len(layer_nums)
-        assert len(conv_out_channels) == len(layer_nums)
-
-        in_filters = [conv_in_channels, *conv_out_channels[:-1]]
-
-        blocks = []
-        for i, layer_num in enumerate(layer_nums):
-            block = []
-            block.append(
-                nn.Sequential(
-                    build_conv_layer(
-                        conv_cfg,
-                        in_filters[i],
-                        conv_out_channels[i],
-                        3,
-                        stride=layer_strides[i],
-                        padding=1),
-                    build_norm_layer(norm_cfg, conv_out_channels[i])[1],
-                    nn.ReLU(inplace=True)
-                )
-            )
-            for j in range(layer_num):
-                block.append(
-                    nn.Sequential(
-                        build_conv_layer(
-                            conv_cfg,
-                            conv_out_channels[i],
-                            conv_out_channels[i],
-                            3,
-                            padding=1),
-                        build_norm_layer(norm_cfg, conv_out_channels[i])[1],
-                        nn.ReLU(inplace=True)
-                    )
-                )
-
-            block = nn.ModuleList(block)
-            blocks.append(block)
-
-        self.blocks = nn.ModuleList(blocks)
-
     @auto_fp16(apply_to=('x',))
     def forward(self, x, coords, batch_size):
-        #x, coords, batch_size = input_data[0], input_data[1], input_data[2]
         pe = self.embedding(coords, x.dtype)
         mappings = self.mapping(coords, batch_size)
 
@@ -379,18 +324,7 @@ class FlatFormer(nn.Module):
 
         x = self.recover_bev(x, coords, batch_size)
 
-        output_list = []
-        for i in range(len(self.blocks)):
-            block = self.blocks[i]
-            for j, conv in enumerate(block):
-                temp = conv(x)
-                if temp.shape == x.shape and self.conv_shortcut:
-                    x = temp + x
-                else:
-                    x = temp
-            output_list.append(x)
-
-        return output_list
+        return x
 
     def _reset_parameters(self):
         for _, p in self.named_parameters():
