@@ -5,7 +5,6 @@ _base_ = [
 ]
 
 voxel_size = (0.32, 0.32, 6)
-window_shape = (13, 13, 1)
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 
 model = dict(
@@ -131,6 +130,9 @@ data = dict(
     samples_per_gpu=1,
     workers_per_gpu=4,
     train=dict(
-        dataset=dict(load_interval=1)
+        type='RepeatDataset',
+        times=1,
+        dataset=dict(
+            load_interval=1)
     ),
 )

@@ -5,7 +5,6 @@ _base_ = [
 ]
 
 voxel_size = (0.32, 0.32, 6)
-window_shape = (13, 13, 1)  # 12 * 0.32m
 point_cloud_range = [-74.88, -74.88, -2, 74.88, 74.88, 4]
 
 model = dict(
