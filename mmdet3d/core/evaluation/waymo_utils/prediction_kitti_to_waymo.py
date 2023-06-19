@@ -203,7 +203,6 @@ class KITTI2Waymo(object):
             else:
                 print(filename, 'not found.')
                 objects = metrics_pb2.Objects()
-            #print(objects)
             with open(
                     join(self.waymo_results_save_dir, f'{filename}.bin'),
                     'wb') as f:

@@ -5,7 +5,6 @@ from mmdet3d.core.points import BasePoints, get_points_type
 from mmdet.datasets.builder import PIPELINES
 from mmdet.datasets.pipelines import LoadAnnotations, LoadImageFromFile
 import os
-from pdb import set_trace
 
 
 @PIPELINES.register_module()
@@ -402,7 +401,6 @@ class LoadPointsFromFile(object):
 
         return points
 
-
     def __call__(self, results):
         """Call function to load points data from file.
 
@@ -679,6 +677,7 @@ class LoadAnnotations3D(LoadAnnotations):
         repr_str += f'{indent_str}poly2mask={self.poly2mask})'
         return repr_str
 
+
 @PIPELINES.register_module()
 class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
     """Load points from multiple sweeps.
@@ -744,9 +743,6 @@ class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
         else:
             raise NotImplementedError
         r = np.linalg.norm(points_numpy[:, :2], ord=2, axis=1)
-        # x_filt = np.abs(points_numpy[:, 0]) < radius
-        # y_filt = np.abs(points_numpy[:, 1]) < radius
-        # not_close = np.logical_not(np.logical_and(x_filt, y_filt))
         not_close = r > radius
         return points[not_close]
 
@@ -767,8 +763,6 @@ class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
         points = results['points']
         points.tensor[:, self.time_dim] = 0
         sweep_points_list = [points]
-        #ts = results['timestamp'] / 1e6
-        ts = None # timestamp in mmdet is wrong
         if self.pad_empty_sweeps and len(results['sweeps']) == 0:
             for i in range(self.sweeps_num):
                 if self.remove_close:
@@ -782,11 +776,6 @@ class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
                 choices = np.arange(len(results['sweeps']))
             else:
                 choices = np.arange(self.sweeps_num)
-            # elif self.test_mode:
-            #     choices = np.arange(self.sweeps_num)
-            # else:
-            #     choices = np.random.choice(
-            #         len(results['sweeps']), self.sweeps_num, replace=False)
             for idx in choices:
                 sweep = results['sweeps'][idx]
                 data_path = os.path.join(os.path.dirname(results['pts_filename']), os.path.basename(sweep['velodyne_path']))
@@ -794,12 +783,6 @@ class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
                 points_sweep = np.copy(points_sweep).reshape(-1, self.load_dim)
                 if self.remove_close:
                     points_sweep = self._remove_close(points_sweep, self.close_radius)
-                # sweep_ts = sweep['timestamp'] / 1e6
-                # points_sweep[:, :3] = points_sweep[:, :3] @ sweep[
-                #     'sensor2lidar_rotation'].T
-                # points_sweep[:, :3] += sweep['sensor2lidar_translation']
-                # points_sweep[:, 3] = -1 * float(idx+1)
-                # points_sweep = points.new_point(points_sweep)
                 curr_pose = results['pose']
                 past_pose = sweep['pose']
 
@@ -819,25 +802,19 @@ class LoadPointsFromMultiSweepsWaymo(LoadPointsFromMultiSweeps):
                 if self.tanh_dim is not None:
                     points_sweep[:, self.tanh_dim] = np.tanh(points_sweep[:, self.tanh_dim])
                 points_sweep[:, self.time_dim] = -1 * float(idx+1)
-                #sweep_ts = sweep["timestamp"] / 1e6
-                #print(ts - sweep_ts)
-                #points_sweep[:, 4] = ts - sweep_ts
                 points_sweep = points_sweep[:, self.use_dim]
 
                 points_sweep = points.new_point(points_sweep)
-                # vis_bev_pc('ms_01_before_cat.png', points_sweep.tensor[:, :3], [-80.88, -80.88, -2, 80.88, 80.88, 4])
                 sweep_points_list.append(points_sweep)
 
         points = points.cat(sweep_points_list)
-        # points = points[:, self.use_dim]
-        # vis_bev_pc('ms_01_after_cat.png', points.tensor[:, :3], [-80.88, -80.88, -2, 80.88, 80.88, 4])
-        # set_trace()
         results['points'] = points
         return results
 
     def __repr__(self):
         """str: Return a string that describes the module."""
         return f'{self.__class__.__name__}(sweeps_num={self.sweeps_num})'
+
 
 @PIPELINES.register_module()
 class LoadPointsFromFileResetLast(LoadPointsFromFile):
@@ -859,7 +836,6 @@ class LoadPointsFromFileResetLast(LoadPointsFromFile):
                  file_client_args=file_client_args,
         )
         self.reset_value = reset_value
-        print(self.use_color)
 
     def __call__(self, results):
         """Call function to load points data from file.

@@ -60,6 +60,7 @@ def rotation_3d_in_axis(points, angles, axis=0):
 
     return torch.einsum('aij,jka->aik', (points, rot_mat_T))
 
+
 def det11_to_xyzwhlr(det11):
     """
     Args:
@@ -81,7 +82,8 @@ def det11_to_xyzwhlr(det11):
     height = det11[:, -1, None]
     out = np.concatenate([xy, z, w, l, height, yaw], axis=-1)
     return out
-    
+
+
 def xywhr2xyxyr(boxes_xywhr):
     """Convert a rotated boxes in XYWHR format to XYXYR format.
 
@@ -212,6 +214,7 @@ def mono_cam_box2vis(cam_box):
 
     return cam_box
 
+
 def waymo2kitti_box(box):
 
     if isinstance(box, torch.Tensor):
@@ -251,6 +254,7 @@ def waymo2kitti_box(box):
 
     kitti_box[:, 6] = kitti_heading
     return kitti_box
+
 
 def kitti2waymo_box(box):
 

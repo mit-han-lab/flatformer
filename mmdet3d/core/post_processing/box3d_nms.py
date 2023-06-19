@@ -5,7 +5,6 @@ import torch
 from mmdet3d.ops.iou3d.iou3d_utils import nms_gpu, nms_normal_gpu
 from mmdet3d.core.bbox.structures import det11_to_xyzwhlr
 
-from pdb import set_trace
 
 def box3d_multiclass_nms(mlvl_bboxes,
                          mlvl_bboxes_for_nms,
@@ -126,6 +125,7 @@ def box3d_multiclass_nms(mlvl_bboxes,
         results = results + (bboxes2d, )
 
     return results
+
 
 def box3d_multiclass_wnms(mlvl_bboxes,
                          mlvl_bboxes_for_nms,
@@ -248,7 +248,7 @@ def aligned_3d_nms(boxes, scores, classes, thresh):
 
     score_sorted = torch.argsort(scores)
     pick = []
-    while (score_sorted.shape[0] != 0):
+    while score_sorted.shape[0] != 0:
         last = score_sorted.shape[0]
         i = score_sorted[-1]
         pick.append(i)

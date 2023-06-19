@@ -13,7 +13,7 @@ class BatchSampler:
     """Class for sampling specific category of ground truths.
 
     Args:
-        sample_list (list[dict]): List of samples.
+        sampled_list (list[dict]): List of samples.
         name (str | None): The category of samples. Default: None.
         epoch (int | None): Sampling epoch. Default: None.
         shuffle (bool): Whether to shuffle indices. Default: False.

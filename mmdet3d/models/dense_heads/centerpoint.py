@@ -1,4 +1,6 @@
 import copy
+from typing import Any, Dict, Mapping
+
 import torch
 from mmcv.cnn import ConvModule, build_conv_layer
 from mmcv.runner import BaseModule, force_fp32
@@ -33,14 +35,17 @@ class SeparateHead(BaseModule):
         bias (str): Type of bias. Default: 'auto'.
     """
 
+    DEFAULT_CONV_CFG = {"type": "Conv2d"}
+    DEFAULT_NORM_CFG = {"type": "BN2d"}
+
     def __init__(self,
                  in_channels,
                  heads,
                  head_conv=64,
                  final_kernel=1,
                  init_bias=-2.19,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='BN2d'),
+                 conv_cfg: Mapping[str, Any] = DEFAULT_CONV_CFG,
+                 norm_cfg: Mapping[str, Any] = DEFAULT_NORM_CFG,
                  bias='auto',
                  init_cfg=None,
                  **kwargs):
@@ -144,6 +149,9 @@ class DCNSeparateHead(BaseModule):
         bias (str): Type of bias. Default: 'auto'.
     """  # noqa: W605
 
+    DEFAULT_CONV_CFG = {"type": "Conv2d"}
+    DEFAULT_NORM_CFG = {"type": "BN2d"}
+
     def __init__(self,
                  in_channels,
                  num_cls,
@@ -152,8 +160,8 @@ class DCNSeparateHead(BaseModule):
                  head_conv=64,
                  final_kernel=1,
                  init_bias=-2.19,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='BN2d'),
+                 conv_cfg: Mapping[str, Any] = DEFAULT_CONV_CFG,
+                 norm_cfg: Mapping[str, Any] = DEFAULT_NORM_CFG,
                  bias='auto',
                  init_cfg=None,
                  **kwargs):
@@ -269,22 +277,27 @@ class CenterHead(BaseModule):
         bias (str): Type of bias. Default: 'auto'.
     """
 
+    DEFAULT_COMMON_HEADS: Dict[str, Any] = {}
+    DEFAULT_LOSS_CLS = {"type": "GaussianFocalLoss", "reduction": "mean"}
+    DEFAULT_LOSS_BBOX = {"type": "L1Loss", "reduction": "none", "loss_weight": 0.25}
+    DEFAULT_SEPARATE_HEAD = {"type": "SeparateHead", "init_bias": -2.19, "final_kernel": 3}
+    DEFAULT_CONV_CFG = {"type": "Conv2d"}
+    DEFAULT_NORM_CFG = {"type": "BN2d"}
+
     def __init__(self,
-                 in_channels=[128],
+                 in_channels=(128,),
                  tasks=None,
                  train_cfg=None,
                  test_cfg=None,
                  bbox_coder=None,
-                 common_heads=dict(),
-                 loss_cls=dict(type='GaussianFocalLoss', reduction='mean'),
-                 loss_bbox=dict(
-                     type='L1Loss', reduction='none', loss_weight=0.25),
-                 separate_head=dict(
-                     type='SeparateHead', init_bias=-2.19, final_kernel=3),
+                 common_heads: Dict[str, Any] = DEFAULT_COMMON_HEADS,
+                 loss_cls: Mapping[str, Any] = DEFAULT_LOSS_CLS,
+                 loss_bbox: Mapping[str, Any] = DEFAULT_LOSS_BBOX,
+                 separate_head: Dict[str, Any] = DEFAULT_SEPARATE_HEAD,
                  share_conv_channel=64,
                  num_heatmap_convs=2,
-                 conv_cfg=dict(type='Conv2d'),
-                 norm_cfg=dict(type='BN2d'),
+                 conv_cfg: Mapping[str, Any] = DEFAULT_CONV_CFG,
+                 norm_cfg: Mapping[str, Any] = DEFAULT_NORM_CFG,
                  bias='auto',
                  norm_bbox=True,
                  init_cfg=None):
@@ -837,13 +850,6 @@ class CenterHead(BaseModule):
                     box_preds[:, :], self.bbox_coder.code_size).bev)
                 # the nms in 3d detection just remove overlap boxes.
 
-                #selected = nms_gpu(
-                #    boxes_for_nms,
-                #    top_scores,
-                #    thresh=self.test_cfg['nms_thr'],
-                #    pre_maxsize=self.test_cfg['pre_max_size'],
-                #    post_max_size=self.test_cfg['post_max_size'])
-
                 if not isinstance(self.test_cfg["nms_thr"], list):
                     selected = nms_gpu(
                         boxes_for_nms,
@@ -873,11 +879,6 @@ class CenterHead(BaseModule):
                     selected_boxes = box_preds[selected]
                     selected_labels = top_labels[selected]
                     selected_scores = top_scores[selected]
-
-            ## if selected is not None:
-            #selected_boxes = box_preds[selected]
-            #selected_labels = top_labels[selected]
-            #selected_scores = top_scores[selected]
 
             if not isinstance(self.test_cfg["nms_thr"], list):
                 selected_boxes = box_preds[selected]

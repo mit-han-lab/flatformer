@@ -1,7 +1,7 @@
 import torch
 from collections import OrderedDict
 
-config = 'waymo_D1_2x_3class_centerhead_iou_nms'
+config = 'waymo_D1_2x_3class_centerhead_iou_nms_2f'
 
 ckpt = torch.load(f'./checkpoints/{config}/latest.pth')
 model = ckpt['state_dict']
